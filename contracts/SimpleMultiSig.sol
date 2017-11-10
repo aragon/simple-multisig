@@ -31,7 +31,8 @@ contract SimpleMultiSig {
 
   // Note that address recovered from signatures must be strictly increasing
   function execute(uint8[] sigV, bytes32[] sigR, bytes32[] sigS, address destination, uint value, bytes data) {
-    require(sigR.length == threshold);
+    uint executeThreshold = isOwner[msg.sender] ? threshold - 1 : threshold; // if sender is owner, sender signature isnt needed
+    require(sigR.length == executeThreshold);
     require(sigR.length == sigS.length && sigR.length == sigV.length);
 
     // Follows ERC191 signature scheme: https://github.com/ethereum/EIPs/issues/191
@@ -41,6 +42,7 @@ contract SimpleMultiSig {
     for (uint i = 0; i < threshold; i++) {
         address recovered = ecrecover(txHash, sigV[i], sigR[i], sigS[i]);
         require(recovered > lastAdd && isOwner[recovered]);
+        require(!isOwner[msg.sender] || recovered != msg.sender); // if sender is owner, ensure signature isnt present
         lastAdd = recovered;
     }
 
