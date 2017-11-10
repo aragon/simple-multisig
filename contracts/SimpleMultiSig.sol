@@ -1,15 +1,25 @@
 pragma solidity 0.4.15;
 contract SimpleMultiSig {
 
-  uint public nonce;                // (only) mutable state
-  uint public threshold;            // immutable state
-  mapping (address => bool) isOwner; // immutable state
-  address[] public ownersArr;        // immutable state
+  uint public nonce;
+  uint public threshold;
+  mapping (address => bool) isOwner;
+  address[] public ownersArr;
 
   function SimpleMultiSig(uint threshold_, address[] owners_) {
+    setupWallet(threshold_, owners_);
+  }
+
+  function setupWallet(uint threshold_, address[] owners_) {
+    // either wallet performs action to itself or it is first setup
+    require(msg.sender == address(this) || threshold == 0);
     require(owners_.length <= 10 && threshold_ <= owners_.length && threshold_ != 0);
 
-    address lastAdd = address(0); 
+    for (uint j=0; j<ownersArr.length; j++) {
+        isOwner[ownersArr[j]] = false;  // clean up old owners if any
+    }
+
+    address lastAdd = address(0);
     for (uint i=0; i<owners_.length; i++) {
       require(owners_[i] > lastAdd);
       isOwner[owners_[i]] = true;
